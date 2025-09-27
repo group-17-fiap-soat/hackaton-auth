@@ -60,6 +60,6 @@ server:
   forward-headers-strategy: native
 
 jwt:
-  secret: SEFDS0FUT05fMjAyNV9TRU5IQV9HUk9VUF8xN19GSUFQWAo=
+  secret: ${JWT_SECRET}
   expiration:
     ms: 86400000
