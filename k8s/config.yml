@@ -1,0 +1,162 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hackaton-auth-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hackaton-auth-app
+  template:
+    metadata:
+      labels:
+        app: hackaton-auth-app
+    spec:
+      containers:
+        - name: hackaton-auth
+          image: 361598269712.dkr.ecr.us-east-1.amazonaws.com/auth-hackaton:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: hackaton-auth-config
+                  key: DATABASE_HOST
+
+            - name: DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: hackaton-auth-config
+                  key: DATABASE
+
+            - name: DATABASE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: hackaton-auth-config
+                  key: DATABASE_PORT
+
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: hackaton-auth-secret
+                  key: DATABASE_USER
+
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hackaton-auth-secret
+                  key: DATABASE_PASSWORD
+
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hackaton-auth-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: hackaton-auth-app
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hackaton-auth-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: fiap-soat-seventeen-hackaton-auth-service.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hackaton-auth-service
+                port:
+                  number: 80
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hackaton-auth-app
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hackaton-auth-app
+  minReplicas: 1
+  maxReplicas: 2
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-server
+  namespace: kube-system
+  labels:
+    k8s-app: metrics-server
+spec:
+  selector:
+    matchLabels:
+      k8s-app: metrics-server
+  template:
+    metadata:
+      labels:
+        k8s-app: metrics-server
+    spec:
+      serviceAccountName: metrics-server
+      volumes:
+        - name: tmp-dir
+          emptyDir: {}
+      hostNetwork: true
+      containers:
+        - name: metrics-server
+          image: k8s.gcr.io/metrics-server/metrics-server:v0.3.7
+          imagePullPolicy: IfNotPresent
+          args:
+            - /metrics-server
+            - --cert-dir=/tmp
+            - --secure-port=4443
+            - --kubelet-preferred-address-types=InternalIP
+            - --kubelet-use-node-status-port
+            - --kubelet-insecure-tls
+          ports:
+            - name: main-port
+              containerPort: 4443
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - name: tmp-dir
+              mountPath: /tmp
+      nodeSelector:
+        kubernetes.io/os: linux
