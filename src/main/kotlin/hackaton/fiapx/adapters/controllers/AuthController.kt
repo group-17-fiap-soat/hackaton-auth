@@ -17,9 +17,16 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import hackaton.fiapx.adapters.controllers.operation.AuthOperation
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Autenticação", description = "Endpoints para registro e login de usuários")
 class AuthController(
     private val registerUserUseCase: RegisterUserUseCase,
     private val loginUserUseCase: LoginUserUseCase,
@@ -28,6 +35,12 @@ class AuthController(
 
 ) : AuthOperation {
     @PostMapping("/register")
+    @Operation(summary = "Registrar novo usuário", description = "Cria uma nova conta de usuário no sistema")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Usuário registrado com sucesso"),
+        ApiResponse(responseCode = "400", description = "Usuário já existe ou dados inválidos",
+            content = [Content(schema = Schema(implementation = String::class))])
+    ])
     override fun register(@RequestBody request: RegisterUserRequestV1): ResponseEntity<String> {
         return try {
             val encodedPassword = passwordEncoder.encode(request.pass)
@@ -43,6 +56,13 @@ class AuthController(
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Fazer login", description = "Autentica um usuário e retorna um token JWT")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Login realizado com sucesso",
+            content = [Content(schema = Schema(implementation = AuthUserResponseV1::class))]),
+        ApiResponse(responseCode = "401", description = "Credenciais inválidas",
+            content = [Content(schema = Schema(implementation = String::class))])
+    ])
     override fun login(@RequestBody request: AuthUserRequestV1): ResponseEntity<Any> {
         return try {
             val user = loginUserUseCase.execute(UserMapper.fromRequestToDomain(request))

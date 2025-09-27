@@ -30,6 +30,18 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
+# Configuração do Swagger/OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    try-it-out-enabled: true
+    operations-sorter: alpha
+    tags-sorter: alpha
+    disable-swagger-default-url: true
+
 logging:
   level:
     tech.challenge: debug
