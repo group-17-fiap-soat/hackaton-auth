@@ -15,8 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const processedListDiv = document.getElementById('processed-list');
 
     let filesToProcess = [];
-    const VIDEO_SERVICE_URL = 'http://localhost:8080/api'; // Video processing microservice
-    const AUTH_SERVICE_URL = 'http://localhost:8082/api'; // Auth microservice (current service)
+    // const VIDEO_SERVICE_URL = 'http://localhost:8080/api'; // Video processing microservice
+
+    const VIDEO_SERVICE_URL = 'http://a71631abbf3ac4d5a9a041098be7461d-1793737116.us-east-1.elb.amazonaws.com/api'; // Video processing microservice
+
 
     const authHeaders = {
         'Authorization': `Bearer ${token}`
@@ -78,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function addProcessedFileToUI(processedFile) {
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
-        
+
         // Check if zipPath exists and is not null
         const hasValidZipPath = processedFile.zipPath && processedFile.zipPath !== 'null' && processedFile.zipPath.trim() !== '';
         const downloadUrl = hasValidZipPath ? `${VIDEO_SERVICE_URL}/download/${processedFile.zipPath}` : null;
@@ -98,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (hasValidZipPath) {
             fileItem.querySelector('.download-btn').addEventListener('click', async () => {
                 try {
-                    const response = await fetch(downloadUrl, { headers: authHeaders });
+                    const response = await fetch(downloadUrl, {headers: authHeaders});
                     if (!response.ok) throw new Error('Falha no download');
 
                     const blob = await response.blob();
