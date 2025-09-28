@@ -62,7 +62,7 @@ spec:
               value: "0.95,0.99"
 
             - name: MANAGEMENT_METRICS_TAGS_APPLICATION
-              value: "hackaton-keyframe-auth"
+              value: "hackaton-auth-app"
 
 
           livenessProbe:
