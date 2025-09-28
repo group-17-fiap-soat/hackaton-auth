@@ -58,9 +58,34 @@ server:
     threads:
       max: 20
   forward-headers-strategy: native
+  address: 0.0.0.0
 
 jwt:
   secret: bXktc3VwZXItc2VjdXJlLWp3dC1rZXktdGhhdC1pcy12ZXJ5LWxvbmctYW5kLXNlY3VyZS1mb3ItcHJvZHVjdGlvbi1hbmQtbXVzdC1iZS1hdC1sZWFzdC0yNTYtYml0cy1mb3ItaG1hYy1zaGEtYWxnb3JpdGhtcw==
 
   expiration:
     ms: 86400000
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+    tags:
+      application: hackaton-keyframe-auth
