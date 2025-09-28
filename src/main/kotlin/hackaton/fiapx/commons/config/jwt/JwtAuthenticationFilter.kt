@@ -22,6 +22,16 @@ class JwtAuthenticationFilter(
     ) {
         val authHeader = request.getHeader("Authorization")
 
+        val requestPath = request.requestURI
+        val allowedPaths = listOf(
+            "/actuator"
+        )
+
+        if (allowedPaths.any { requestPath.startsWith(it) }) {
+            filterChain.doFilter(request, response)
+            return
+        }
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response)
             return
